@@ -1,0 +1,104 @@
+
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <link href='https://fonts.googleapis.com/css?family=Oswald:400,300' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,600' rel='stylesheet' type='text/css'>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=2.0, minimum-scale=1.0, user-scalable=1" />
+    <meta name="HandheldFriendly" content="true">
+    <meta name="format-detection" content="telephone=no">
+    <title>Geocache title / page title</title>
+    <meta name="author" content="Your name">
+    <meta name="description" content="Click to see where to find the geocache (if good weather)" />
+    <meta name="keywords" content="" />
+    <meta name="robots" content="noindex,nofollow">
+    <link rel="shortcut icon" href="images/favicon.ico">
+    <link rel="stylesheet" href="css/good-styles.css">
+    <script>
+     if ('serviceWorker' in navigator) {
+         navigator.serviceWorker.register('./sw.js').then(function(registration) {
+             // OK
+             console.log('Registration completed.', registration.scope);
+         }).catch(function(err) {
+             // Failed
+             console.log('Registration failed.', err);
+         });
+     }
+    </script>
+    <script src="./js/base64.js"></script>
+    <script type="text/javascript">
+     function parseAndDisplayData() {
+         if(window.location.hash) {
+             var variables = window.location.hash.substr(1);
+             if(variables.length===9){ //Zero-pad URL if needed
+               variables += "...";
+             }
+             console.log("parsed hash = " + variables);
+             var decoded64 = base64_decode(variables +'0');
+             console.log(decoded64);
+
+
+             let temp = 0;
+             let humidity = 0;
+
+             /*
+                0:   uint8_t     format;          // (0x02 = realtime sensor readings in base64)
+                1:   uint8_t     humidity;        // one lsb is 0.5%
+                2-3: uint16_t    temperature;     // Signed 8.8 fixed-point notation.
+                4-5: uint16_t    pressure;        // (-50kPa)
+              */
+             humidity = decoded64[0] * 0.5;
+             var uTemp = (((decoded64[1] & 127) << 8) | decoded64[2]);
+             var tempSign = (decoded64[2] >> 7) & 1;
+             temp = tempSign === 0 ? uTemp/256.0 : -1 * uTemp/256.0;
+
+             let temperatureEl = document.querySelector("#temperature");
+             let humidityEl = document.querySelector("#humidity");
+
+             temperatureEl.innerText = Math.round(temp); //+ " / " + Math.round(temp * 1.8 + 32);
+             humidityEl.innerText = humidity;
+         } else {
+             window.location.replace("https://www.google.com");
+         }
+     }
+
+     window.onhashchange = function() {
+         console.log('hash changed: ' + location.hash);
+         parseAndDisplayData();
+     }
+
+     document.addEventListener("DOMContentLoaded", function(event) {
+         parseAndDisplayData();
+     });
+    </script>
+</head>
+<body>
+
+    <div class="container">
+        <header class="header">
+            <div class="branding">Good weather</div>
+<br /><br />
+        <h1 class="coordinates">Now it is a good weather to go the geocache. Coordinates can be found below.<br><br />
+        N 00&deg; 00.000 E 000&deg; 00.000
+<br /><br />
+
+<br/><br /><br />
+
+        </header>
+        <div class="content">
+        <h1>Current conditions</h1>
+            <ul class="measurements">
+                <li class="temperature">
+                    <div class="measurement"><h3 id="temperature"></h3></div>
+                    <div class="info"><p>Temperature<span>&deg;C</span></p></div>
+                </li>
+                <li class="humidity">
+                    <div class="measurement"><h3 id="humidity"></h3></div>
+                    <div class="info"><p>Humidity<span>%</span></p></div>
+                </li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
