@@ -50,7 +50,7 @@
               */
              humidity = decoded64[0] * 0.5;
              var uTemp = (((decoded64[1] & 127) << 8) | decoded64[2]);
-             var tempSign = (decoded64[2] >> 7) & 1;
+             var tempSign = (decoded64[1] >> 7) & 1;
              temp = tempSign === 0 ? uTemp/256.0 : -1 * uTemp/256.0;
 
              let temperatureEl = document.querySelector("#temperature");
