@@ -135,10 +135,9 @@ static void power_manage(void)
     nrf_gpio_pin_clear(LED_GREEN);
 }
 
-static void updateAdvertisement(void)
+static void updateAdvertisement(int32_t raw_temperature)
 {
-    int16_t temp = data.temperature;
-    int16_t temperature = (temp) >> 8;
+    int32_t temperature = raw_temperature / 100;
     if( temperature >= HIGH_TEMPERATURE_LIMIT || temperature < LOW_TEMPERATURE_LIMIT )
     {
         eddystone_advertise_url(coordinates_buffer, sizeof(coordinates_buffer));
@@ -159,6 +158,7 @@ void main_timer_handler(void * p_context)
     static uint32_t raw_h = 0;
     int32_t accx, accy, accz;
     static int32_t acc[3] = {0};
+    static int32_t raw_temperature = 0;
 
     //If we have all the sensors
     if(model_plus)
@@ -168,6 +168,7 @@ void main_timer_handler(void * p_context)
       raw_t = bme280_get_temperature();
       raw_p = bme280_get_pressure();
       raw_h = bme280_get_humidity();
+      raw_temperature = raw_t;
 
       //Start sensor read for next pass
       bme280_set_mode(BME280_MODE_FORCED);
@@ -196,16 +197,10 @@ void main_timer_handler(void * p_context)
 
     int16_t temp = data.temperature;
     int16_t temperature = (temp) >> 8;
-    if (temperature >= HIGH_TEMPERATURE_LIMIT || temperature < LOW_TEMPERATURE_LIMIT)
-    {
-        encodeToUrlDataFormat(coordinates_buffer, URL_BASE_LENGTH, &data);
-    }
-    else
-    {
-        encodeToUrlDataFormat(badweather_buffer, URL_BASE_LENGTH, &data);
-    }
+    encodeToUrlDataFormat(coordinates_buffer, URL_BASE_LENGTH, &data);
+    encodeToUrlDataFormat(badweather_buffer, URL_BASE_LENGTH, &data);
 
-    updateAdvertisement();
+    updateAdvertisement(raw_temperature);
 }
 
 
